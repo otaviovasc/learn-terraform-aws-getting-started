@@ -9,14 +9,13 @@ Este repositório documenta a execução passo a passo do tutorial de IaC com **
 - [Pré-requisitos](#pré-requisitos)
 - [Passo a Passo](#passo-a-passo)
   - [1. Instalação das Ferramentas](#1-instalação-das-ferramentas)
-  - [2. Iniciar o LocalStack com Docker](#2-iniciar-o-localstack-com-docker)
-  - [3. Estrutura do Projeto](#3-estrutura-do-projeto)
-  - [4. Formatação dos Arquivos](#4-formatação-dos-arquivos)
-  - [5. Inicialização do Workspace](#5-inicialização-do-workspace)
-  - [6. Validação da Configuração](#6-validação-da-configuração)
-  - [7. Plano de Execução](#7-plano-de-execução)
-  - [8. Criação da Infraestrutura](#8-criação-da-infraestrutura)
-  - [9. Inspeção do Estado](#9-inspeção-do-estado)
+  - [2. Estrutura do Projeto](#2-estrutura-do-projeto)
+  - [3. Formatação dos Arquivos](#3-formatação-dos-arquivos)
+  - [4. Inicialização do Workspace](#4-inicialização-do-workspace)
+  - [5. Validação da Configuração](#5-validação-da-configuração)
+  - [6. Plano de Execução](#6-plano-de-execução)
+  - [7. Criação da Infraestrutura](#7-criação-da-infraestrutura)
+  - [8. Inspeção do Estado](#8-inspeção-do-estado)
 - [Recursos Provisionados no LocalStack](#recursos-provisionados-no-localstack)
 - [Arquivos do Projeto](#arquivos-do-projeto)
 - [Comandos Utilizados](#comandos-utilizados)
@@ -47,66 +46,25 @@ brew install hashicorp/tap/terraform
 terraform --version
 ```
 
-> ![Terraform version](images/01-terraform-version.png)
+> ![Terraform install](images/01-terraform-install.png)
 >
 > *Terraform v1.15.6 instalado via Homebrew*
 
-**LocalStack CLI:**
+**LocalStack CLI e Docker:**
 
 ```bash
 brew install localstack/tap/localstack-cli
-localstack --version
-```
-
-> ![LocalStack CLI](images/02-localstack-cli.png)
->
-> *LocalStack CLI v2026.5.0 instalado*
-
----
-
-### 2. Iniciar o LocalStack com Docker
-
-O LocalStack emula os serviços AWS localmente via container Docker.
-
-```bash
-docker run --rm -d \
-  --name localstack \
-  -p 4566:4566 \
-  -p 4510-4559:4510-4559 \
+docker run --rm -d --name localstack \
+  -p 4566:4566 -p 4510-4559:4510-4559 \
   -e LOCALSTACK_AUTH_TOKEN=seu-token \
   localstack/localstack:latest
 ```
 
-**Verificar se está rodando:**
-
-```bash
-curl -s http://localhost:4566/_localstack/health | python3 -m json.tool
-```
-
-Saída esperada — serviços disponíveis:
-
-```json
-{
-    "services": {
-        "ec2": "available",
-        "iam": "available",
-        "lambda": "available",
-        ...
-    }
-}
-```
-
-> ![LocalStack health](images/03-localstack-health.png)
->
-> *Health endpoint do LocalStack confirmando EC2 disponível*
-
-> ![Docker LocalStack running](images/04-docker-localstack.png)
->
-> *Container LocalStack em execução (`docker ps`)**
+Verifique com `curl localhost:4566/_localstack/health` — o serviço `ec2` deve aparecer como `available`.
 
 ---
 
-### 3. Estrutura do Projeto
+### 2. Estrutura do Projeto
 
 ```
 ponderada-romualdo-8/
@@ -160,25 +118,25 @@ resource "aws_instance" "app_server" {
 
 > **Nota:** O provider é configurado com `endpoints` customizados para o LocalStack (`localhost:4566`). As validações de credenciais são desabilitadas (`skip_credentials_validation`, `skip_requesting_account_id`, `skip_metadata_api_check`). A AMI `ami-12345678` é um mock fornecido pelo LocalStack.
 
-> ![Project structure](images/05-project-structure.png)
+> ![Project structure](images/02-project-structure.png)
 >
 > *Arquivos do projeto*
 
 ---
 
-### 4. Formatação dos Arquivos
+### 3. Formatação dos Arquivos
 
 ```bash
 terraform fmt
 ```
 
-> ![Terraform fmt](images/06-terraform-fmt.png)
+> ![Terraform fmt](images/03-terraform-fmt.png)
 >
 > *Formatação aplicada nos arquivos .tf*
 
 ---
 
-### 5. Inicialização do Workspace
+### 4. Inicialização do Workspace
 
 ```bash
 terraform init
@@ -195,13 +153,13 @@ Initializing provider plugins...
 Terraform has been successfully initialized!
 ```
 
-> ![Terraform init](images/07-terraform-init.png)
+> ![Terraform init](images/04-terraform-init.png)
 >
 > *Provider AWS v5.100.0 instalado*
 
 ---
 
-### 6. Validação da Configuração
+### 5. Validação da Configuração
 
 ```bash
 terraform validate
@@ -213,13 +171,13 @@ terraform validate
 Success! The configuration is valid.
 ```
 
-> ![Terraform validate](images/08-terraform-validate.png)
+> ![Terraform validate](images/05-terraform-validate.png)
 >
 > *Configuração válida*
 
 ---
 
-### 7. Plano de Execução
+### 6. Plano de Execução
 
 ```bash
 terraform plan
@@ -236,13 +194,13 @@ terraform plan
 | Região | `us-east-1` |
 | Tag | `Name = learn-terraform-localstack` |
 
-> ![Terraform plan](images/09-terraform-plan.png)
+> ![Terraform plan](images/06-terraform-plan.png)
 >
 > *Plano de execução: 1 recurso a ser criado*
 
 ---
 
-### 8. Criação da Infraestrutura
+### 7. Criação da Infraestrutura
 
 ```bash
 terraform apply -auto-approve
@@ -257,13 +215,13 @@ aws_instance.app_server: Creation complete after 11s [id=i-abdd4450dcf967a96]
 Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
 ```
 
-> ![Terraform apply](images/10-terraform-apply.png)
+> ![Terraform apply](images/07-terraform-apply.png)
 >
 > *Instância EC2 criada com sucesso no LocalStack*
 
 ---
 
-### 9. Inspeção do Estado
+### 8. Inspeção do Estado
 
 ```bash
 terraform state list
@@ -292,7 +250,7 @@ resource "aws_instance" "app_server" {
 }
 ```
 
-> ![Terraform state](images/11-terraform-state.png)
+> ![Terraform state](images/08-terraform-state.png)
 >
 > *Estado do Terraform após provisionamento*
 
